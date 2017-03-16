@@ -7,7 +7,7 @@ reload(sys)
 sys.setdefaultencoding('UTF8')
 
 import argparse
-from time import sleep
+from time import sleep, time
 import twitter
 import warnings
 
@@ -26,9 +26,17 @@ def initializeAPI():
 	return api
 
 def obtain_tweets(api, user, gets_rts):
+	sleep_time = 0
+	
 	# Obtains the average sleep time in order to avoid bad API use
 	try:
-		retardo = api.GetAverageSleepTime("/statuses/user_timeline")
+		rate_limit = api.CheckRateLimit("/statuses/user_timeline")
+		
+		# Normally, we already know the rate limit lasts 15 minutes, but I guess it's better to get that value dynamically
+		current_time = int(time())
+		diff = rate_limit.reset - current_time
+
+		sleep_time = float(diff) / rate_limit.limit
 	except twitter.error.TwitterError, e:
 		print "Twitter error:", str(e)
 		exit(1)
@@ -57,10 +65,10 @@ def obtain_tweets(api, user, gets_rts):
 
 		# Extracts ID from the last obtained tweet so we can filter correctly in next iteration
 		# We subtract 1 to it to avoid this last tweet being repeated in the next chunk
-		maxId = statuses[-1]._id - 1
+		maxId = statuses[-1].id - 1
 
 		# Sleep to obey the rate limits
-		sleep(retardo)
+		sleep(sleep_time)
 
 	print "Obtained tweets from", user + "."
 	return data
