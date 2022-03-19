@@ -1,11 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Avoids codification errors
-import sys
-reload(sys)
-sys.setdefaultencoding('UTF8')
-
 import argparse
 from time import sleep, time
 import twitter
@@ -13,7 +8,7 @@ import warnings
 
 TWEETS_PER_CALL = 200
 MAXIMUM_TWEETS = 3200
-NUM_ITER = MAXIMUM_TWEETS / TWEETS_PER_CALL
+NUM_ITER = int(MAXIMUM_TWEETS / TWEETS_PER_CALL)
 
 def initializeAPI():
 	# Fill with your values
@@ -22,7 +17,7 @@ def initializeAPI():
 		access_token_key='',
 		access_token_secret='')
 
-	print "API initialized."
+	print("API initialized.")
 	return api
 
 def obtain_tweets(api, user, gets_rts):
@@ -37,8 +32,8 @@ def obtain_tweets(api, user, gets_rts):
 		diff = rate_limit.reset - current_time
 
 		sleep_time = float(diff) / rate_limit.limit
-	except twitter.error.TwitterError, e:
-		print "Twitter error:", str(e)
+	except twitter.error.TwitterError as e:
+		print("Twitter error:", str(e))
 		exit(1)
 
 	data = []
@@ -51,13 +46,13 @@ def obtain_tweets(api, user, gets_rts):
 		statuses = None
 		try:
 			statuses = api.GetUserTimeline(screen_name=user,max_id=maxId,count=TWEETS_PER_CALL,include_rts=gets_rts)
-		except twitter.error.TwitterError, e:
-			print "Twitter error:", str(e)
+		except twitter.error.TwitterError as e:
+			print("Twitter error:", str(e))
 			exit(1)
 
 		# Ends if there aren't any tweets left before finishing the loop
 		if len(statuses) == 0:
-			print "Obtained tweets from", user + "."
+			print("Obtained tweets from", user + ".")
 			return data
 
 		# We are only interested in collecting the body text from the tweets
@@ -70,16 +65,16 @@ def obtain_tweets(api, user, gets_rts):
 		# Sleep to obey the rate limits
 		sleep(sleep_time)
 
-	print "Obtained tweets from", user + "."
+	print("Obtained tweets from", user + ".")
 	return data
 
 def write_data_to_file(data, filename):
 	try:
 		file = open(filename, 'w')
 		file.write("\n".join(data))
-		print "Tweets written in", filename
+		print("Tweets written in", filename)
 	except IOError:
-		print "Error writing data to", filename
+		print("Error writing data to", filename)
 		return
 
 def main():
